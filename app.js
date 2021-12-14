@@ -11,7 +11,12 @@ const cors = require('cors')
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
 app.use(cors())
+app.use((req,res,next) => {
+    res.header('Access-Control-Allow-Origin','*');
+    next();
+});
 
+//const mongourl = "mongodb://localhost:27017"
 const mongourl = "mongodb+srv://govinduchaitanya3:1234@cluster0.jmt1h.mongodb.net/zomato?retryWrites=true&w=majority"
 var db;
 //get
@@ -40,10 +45,11 @@ app.get('/restaurant',(req,res) =>{
     var query = {}
     if(req.query.stateId){
         query={state_id:Number(req.query.stateId)}
-        console.log(query)
-    }else if(req.query.mealtype_id){
-        query={"mealTypes.mealtype_id":Number(req.query.mealtype_id)}
+        
+    }else if(req.query.mealtype){
+        query={"mealTypes.mealtype_id":Number(req.query.mealtype)}
     }
+    console.log(query)
     db.collection('restaurants').find(query).toArray((err,result)=>{
         if(err) throw err;
         res.send(result)
@@ -56,8 +62,6 @@ app.get('/filter/:mealType',(req,res) => {
     var sort = {cost:1}
     var skip = 0;
     var limit = 1000000000000;
-    var mealType = Number(req.params.mealType);
-    var query = {"mealTypes.mealtype_id":Number(mealType)};
     if(req.query.sortkey){
         sort = {cost:req.query.sortkey}
     }
@@ -65,15 +69,19 @@ app.get('/filter/:mealType',(req,res) => {
         skip = Number(req.query.skip);
         limit = Number(req.query.limit)
     }
+    var mealType = req.params.mealType;
+    var query = {"mealTypes.mealtype_id":Number(mealType)};
     if(req.query.cuisine && req.query.lcost && req.query.hcost){
         query={
             $and:[{cost:{$gt:Number(req.query.lcost),$lt:Number(req.query.hcost)}}],
             "cuisines.cuisine_id":Number(req.query.cuisine),
             "mealTypes.mealtype_id":Number(mealType)
         }
-    }
+    }   
     else if(req.query.cuisine){
-        query = {"mealTypes.mealtype_id":mealType,"cuisines.cuisine_id":Number(req.query.cuisine) }
+        query = {"mealTypes.mealtype_id":Number(mealType),"cuisines.cuisine_id":Number(req.query.cuisine) }
+        console.log(query)
+       
        //query = {"type.mealtype":mealType,"Cuisine.cuisine":{$in:["1","5"]}}
     }
     else if(req.query.lcost && req.query.hcost){
@@ -98,6 +106,7 @@ app.get('/quicksearch',(req,res) =>{
 // restaurant Details
 app.get('/details/:id',(req,res) => {
     var id = req.params.id
+    console.log(id)
     db.collection('restaurants').find({restaurant_id:Number(id)}).toArray((err,result)=>{
         if(err) throw err;
         res.send(result)
@@ -108,24 +117,25 @@ app.get('/details/:id',(req,res) => {
 app.get('/menu/:id',(req,res) => {
     var id = req.params.id
     console.log(id)
-    db.collection('menu').find({restaurant_id:Number(id)}).toArray((err,result)=>{
+    db.collection('Restaurantmenu').find({restaurant_id:Number(id)}).toArray((err,result)=>{
         if(err) throw err;
         res.send(result)
     })
 })
 
 app.post('/menuItem',(req,res) => {
-    console.log(req.body)
-    db.collection('menu').find({menu_id:{$in:req.body}}).toArray((err,result)=>{
+    //console.log(req.body.id)
+    db.collection('Restaurantmenu').find({menu_id:{$in:req.body}}).toArray((err,result)=>{
         if(err) throw err;
         res.send(result)
+        console.log(result)
     })
 })
 
 // place order 
 app.post('/placeOrder',(req,res) => {
     console.log(req.body);
-    db.collection('orders').insert(req.body,(err,result) => {
+    db.collection('orders').insertOne(req.body,(err,result) => {
         if(err) throw err;
         res.send("Order Placed")
     })
@@ -149,7 +159,6 @@ app.get('/viewOrder/:id',(req,res) => {
         res.send(result)
     })
 })
-
 
 app.delete('/deleteOrder',(req,res) => {
     db.collection('orders').remove({},(err,result)=>{
@@ -179,8 +188,8 @@ app.put('/updateStatus/:id',(req,res) => {
     var id = mongo.ObjectId(req.params.id);
     var status = 'Pending';
     var statuVal = 2
-    if(req.query.statuVal){
-        statuVal = Number(req.query.statuVal)
+    if(req.query.status){
+        statuVal = Number(req.query.status)
         if(statuVal == 1){
             status = 'Accepted'
         }else if (statuVal == 0){
@@ -202,6 +211,7 @@ app.put('/updateStatus/:id',(req,res) => {
     )
 })
 
+
 MongoClient.connect(mongourl, (err,client) => {
     if(err) console.log("Error While Connecting");
     db = client.db('zomato');
@@ -209,6 +219,3 @@ MongoClient.connect(mongourl, (err,client) => {
         console.log(`listening on port no ${port}`)
     });
 })
-
-
-
