@@ -12,8 +12,8 @@ app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
 app.use(cors())
 
-
-const mongourl = "mongodb+srv://govinduchaitanya3:1234@cluster0.jmt1h.mongodb.net/zomato?retryWrites=true&w=majority"
+//const mongourl = "mongodb://localhost:27017"
+const mongourl = "mongodb+srv://local:testuser@cluster0.f8vmc.mongodb.net/zomato?retryWrites=true&w=majority"
 var db;
 //get
 app.get('/',(req,res) => {
@@ -117,7 +117,7 @@ app.get('/menu/:id',(req,res) => {
 
 app.post('/menuItem',(req,res) => {
     console.log(req.body)
-    db.collection('menu').find({menu_id:{$in:req.body}}).toArray((err,result)=>{
+    db.collection('menu').find({menu_id:{$in:req.body.ids}}).toArray((err,result)=>{
         if(err) throw err;
         res.send(result)
     })
@@ -210,7 +210,6 @@ MongoClient.connect(mongourl, (err,client) => {
         console.log(`listening on port no ${port}`)
     });
 })
-
 
 
 
