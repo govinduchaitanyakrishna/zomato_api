@@ -117,7 +117,7 @@ app.get('/details/:id',(req,res) => {
 app.get('/menu/:id',(req,res) => {
     var id = req.params.id
     console.log(id)
-    db.collection('Restaurantmenu').find({restaurant_id:Number(id)}).toArray((err,result)=>{
+    db.collection('menu').find({restaurant_id:Number(id)}).toArray((err,result)=>{
         if(err) throw err;
         res.send(result)
     })
@@ -125,7 +125,7 @@ app.get('/menu/:id',(req,res) => {
 
 app.post('/menuItem',(req,res) => {
     //console.log(req.body.id)
-    db.collection('Restaurantmenu').find({menu_id:{$in:req.body}}).toArray((err,result)=>{
+    db.collection('menu').find({menu_id:{$in:req.body}}).toArray((err,result)=>{
         if(err) throw err;
         res.send(result)
         console.log(result)
